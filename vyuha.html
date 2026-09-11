@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyuha · AI Skill Verification for iGOT Karmayogi</title>
+<style>
+  :root{
+    --ink:#10233F;
+    --ink-soft:#2C3E5C;
+    --teal:#0F766E;
+    --teal-deep:#0B5C55;
+    --saffron:#D98A2E;
+    --paper:#F3F5F2;
+    --panel:#FFFFFF;
+    --line:#DCE2DD;
+    --text:#1F2937;
+    --text-soft:#5B6472;
+    --good:#1F7A4D;
+    --good-bg:#E7F4EC;
+    --warn-bg:#FBEFE1;
+    --radius:10px;
+    --serif: "Source Serif 4", "Georgia", serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  .topbar{
+    background:var(--ink);
+    color:#fff;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-mark{
+    width:30px;height:30px;border-radius:7px;
+    background:linear-gradient(135deg,var(--teal),var(--saffron));
+    flex-shrink:0;
+  }
+  .brand-text{ line-height:1.15; }
+  .brand-text .name{ font-family:var(--serif); font-size:16px; font-weight:600; }
+  .brand-text .sub{ font-size:11.5px; color:#B9C4D6; }
+
+  .topbar-actions{ display:flex; gap:8px; }
+  .pill-btn{
+    background:none;
+    border:1px solid rgba(255,255,255,0.25);
+    color:#DCE4F0;
+    font-size:12px;
+    padding:7px 12px;
+    border-radius:999px;
+    cursor:pointer;
+    font-family:var(--sans);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .pill-btn:hover{ border-color:rgba(255,255,255,0.55); }
+  .pill-btn.accent{
+    background:var(--saffron);
+    border-color:var(--saffron);
+    color:#26170A;
+  }
+  .pill-btn.accent.playing{
+    background:transparent;
+    color:#F3C98C;
+    border-color:#F3C98C;
+  }
+
+  .progress-track{
+    height:3px;
+    background:#1B3153;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--teal),var(--saffron));
+    transition:width 0.4s ease;
+  }
+
+  .stepper-wrap{
+    background:var(--ink-soft);
+    overflow-x:auto;
+    padding:10px 16px;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:max-content;
+    margin:0 auto;
+    max-width:760px;
+  }
+  .step-dot{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#AEB9CC;
+    font-size:11.5px;
+    white-space:nowrap;
+  }
+  .step-dot .circle{
+    width:20px;height:20px;border-radius:50%;
+    border:1.5px solid #64708A;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10.5px;
+    flex-shrink:0;
+    transition:background 0.2s ease, border-color 0.2s ease;
+  }
+  .step-dot.done .circle{ background:var(--teal); border-color:var(--teal); color:#fff; }
+  .step-dot.active .circle{ background:var(--saffron); border-color:var(--saffron); color:#20140A; }
+  .step-dot.active{ color:#fff; font-weight:600; }
+  .step-dot.done{ color:#CFE8E4; }
+  .step-line{ width:16px;height:1px; background:#4C5872; flex-shrink:0; }
+
+  main{ max-width:760px; margin:0 auto; padding:28px 16px 100px; }
+
+  .device{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,35,63,0.04);
+    position:relative;
+  }
+  .device-chrome{
+    background:#EDEFEC;
+    border-bottom:1px solid var(--line);
+    padding:9px 14px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .device-chrome .dot{ width:8px;height:8px;border-radius:50%; background:#C9CFC8; }
+  .device-chrome .url{ margin-left:10px; font-size:11px; color:#8A9188; font-family:var(--sans); }
+
+  .screen{
+    padding:32px 28px 30px;
+    min-height:400px;
+    display:flex;
+    flex-direction:column;
+  }
+  .screen.rise{ animation:rise 0.35s ease; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+
+  .eyebrow{ font-size:12.5px; color:var(--teal-deep); font-weight:600; margin-bottom:6px; }
+  h1.screen-title{ font-family:var(--serif); font-size:26px; font-weight:600; margin:0 0 8px; color:var(--ink); line-height:1.25; }
+  .screen-sub{ color:var(--text-soft); font-size:14.5px; margin:0 0 22px; max-width:52ch; }
+
+  .btn{
+    font-family:var(--sans); font-size:14px; font-weight:600;
+    padding:11px 20px; border-radius:8px; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform 0.1s ease, background 0.15s ease;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{ background:var(--teal); color:#fff; }
+  .btn-primary:hover{ background:var(--teal-deep); }
+  .btn-primary:disabled{ background:#A9BCB8; cursor:not-allowed; }
+  .btn-ghost{ background:transparent; color:var(--ink); border:1px solid var(--line); }
+  .btn-ghost:hover{ border-color:#B7C0BA; }
+  .btn-saffron{ background:var(--saffron); color:#26170A; }
+  .btn-saffron:hover{ background:#C17A22; }
+
+  /* cover screen */
+  .cover{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px 6px;
+  }
+  .cover .cover-mark{
+    width:56px;height:56px;border-radius:14px;
+    background:linear-gradient(135deg,var(--teal),var(--saffron));
+    margin-bottom:22px;
+  }
+  .cover .ps-id{
+    font-size:12px; letter-spacing:0.02em; color:var(--text-soft);
+    margin-bottom:10px;
+  }
+  .cover h1{
+    font-family:var(--serif); font-size:28px; font-weight:600;
+    color:var(--ink); max-width:26ch; margin:0 0 12px; line-height:1.3;
+  }
+  .cover p{ color:var(--text-soft); font-size:14.5px; max-width:44ch; margin:0 0 30px; }
+  .cover-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+
+  .profile-card{
+    border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px;
+    display:flex; gap:14px; align-items:center; background:#FAFBFA; margin-top:6px;
+  }
+  .avatar{
+    width:46px;height:46px;border-radius:50%;
+    background:linear-gradient(135deg,var(--teal),#3B9E95); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif); font-size:17px; flex-shrink:0;
+  }
+  .profile-lines{ font-size:13.5px; line-height:1.55; }
+  .profile-lines .pname{ font-weight:700; color:var(--ink); font-size:14.5px; }
+  .profile-lines .prole{ color:var(--text-soft); }
+
+  .question-block{ margin-bottom:6px; }
+  .qcount{ font-size:12px; color:var(--text-soft); margin-bottom:4px; }
+  .qtext{ font-size:15px; font-weight:600; color:var(--ink); margin:0 0 14px; line-height:1.5; }
+  .options{ display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+  .option{
+    border:1px solid var(--line); border-radius:8px; padding:11px 14px;
+    font-size:13.8px; cursor:pointer; text-align:left; background:#fff;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .option:hover{ border-color:var(--teal); }
+  .option.picked{ border-color:var(--teal); background:var(--good-bg); }
+  .option.picked::after{ content:" ✓"; color:var(--good); font-weight:700; }
+  .feedback-tag{
+    display:inline-flex; align-items:center; gap:6px; font-size:12.5px;
+    color:var(--good); background:var(--good-bg); padding:5px 10px;
+    border-radius:999px; margin-bottom:16px; width:fit-content;
+  }
+
+  .skill-row{ margin-bottom:16px; }
+  .skill-head{ display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:6px; }
+  .skill-name{ font-weight:600; color:var(--ink); }
+  .skill-gap-tag{ font-size:11.5px; color:var(--text-soft); }
+  .bar-track{ position:relative; height:9px; background:#E7EAE6; border-radius:999px; overflow:visible; }
+  .bar-fill{ height:100%; border-radius:999px; background:var(--teal); width:0%; transition:width 0.9s cubic-bezier(.2,.8,.3,1); }
+  .bar-fill.low{ background:#C0562F; }
+  .bar-fill.ok{ background:#2E8B6F; }
+  .bench-mark{ position:absolute; top:-3px; width:2px; height:15px; background:var(--ink); }
+  .legend{ display:flex; gap:16px; font-size:11.5px; color:var(--text-soft); margin:14px 0 4px; flex-wrap:wrap; }
+  .legend span{ display:flex; align-items:center; gap:5px; }
+  .swatch{ width:9px;height:9px;border-radius:2px; }
+
+  .course-card{
+    border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;
+    margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;
+    gap:12px; flex-wrap:wrap;
+  }
+  .course-info .ctitle{ font-weight:700; font-size:14px; color:var(--ink); }
+  .course-info .cmeta{ font-size:12px; color:var(--text-soft); margin-top:2px; }
+  .course-info .ctag{
+    display:inline-block; margin-top:6px; font-size:11px; color:var(--teal-deep);
+    background:#E4F1EF; padding:3px 8px; border-radius:999px;
+  }
+  .btn-add{
+    font-size:12.5px; padding:8px 14px; border-radius:7px; border:1px solid var(--teal);
+    background:#fff; color:var(--teal-deep); cursor:pointer; font-weight:600; flex-shrink:0;
+  }
+  .btn-add.added{ background:var(--good-bg); border-color:var(--good); color:var(--good); }
+
+  .checklist{ margin:10px 0 6px; }
+  .check-item{
+    display:flex; align-items:center; gap:10px; font-size:14px; padding:10px 0;
+    border-bottom:1px solid #EEF0ED; color:var(--text-soft);
+  }
+  .check-item:last-child{ border-bottom:none; }
+  .check-circle{
+    width:18px;height:18px;border-radius:50%; border:2px solid var(--line); flex-shrink:0;
+    display:flex;align-items:center;justify-content:center; font-size:10px;
+  }
+  .check-item.done .check-circle{ background:var(--good); border-color:var(--good); color:#fff; }
+  .check-item.done{ color:var(--ink); font-weight:500; }
+  .spinner{
+    width:15px;height:15px; border:2px solid #D8DEDA; border-top-color:var(--teal);
+    border-radius:50%; animation:spin 0.8s linear infinite; display:inline-block;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .dropzone{
+    border:1.5px dashed #C4CCC6; border-radius:var(--radius); padding:26px 18px;
+    text-align:center; color:var(--text-soft); font-size:13.5px; margin-bottom:16px;
+    background:#FAFBFA;
+  }
+  .dropzone .fname{ font-weight:700; color:var(--ink); margin-top:4px; }
+
+  .gen-q{ border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; background:#fff; }
+  .gen-q-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .gen-q-text{ font-size:13.8px; font-weight:600; color:var(--ink); margin:0 0 8px; }
+  .comp-tag{ font-size:10.5px; color:var(--teal-deep); background:#E4F1EF; padding:2px 7px; border-radius:999px; white-space:nowrap; }
+  .approve-btn{
+    font-size:12px; padding:6px 12px; border-radius:6px; border:1px solid var(--line);
+    background:#fff; cursor:pointer; color:var(--text-soft); font-weight:600; margin-top:10px;
+  }
+  .approve-btn.approved{ background:var(--good-bg); border-color:var(--good); color:var(--good); }
+
+  .badge-wrap{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:14px 0 8px; position:relative; }
+  .badge{
+    width:76px;height:76px;border-radius:50%; background:var(--good-bg); border:2px solid var(--good);
+    color:var(--good); display:flex;align-items:center;justify-content:center; font-size:34px; margin-bottom:16px;
+    animation:pop 0.5s cubic-bezier(.3,1.4,.5,1);
+  }
+  @keyframes pop{ from{ transform:scale(0.4); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .loop-note{
+    font-size:13px; color:var(--text-soft); background:#F5F2EA; border:1px solid var(--warn-bg);
+    border-radius:8px; padding:12px 14px; margin-top:18px; max-width:50ch;
+  }
+
+  .actions{ margin-top:auto; padding-top:24px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .caption{ font-size:12px; color:var(--text-soft); max-width:60%; }
+  .caption b{ color:var(--ink-soft); }
+  .nav-btns{ display:flex; gap:8px; }
+
+  footer{ text-align:center; font-size:11.5px; color:#8B93A0; padding:18px 0 10px; }
+  .kbd-hint{ text-align:center; font-size:11px; color:#A6ADB6; padding-bottom:20px; }
+  .kbd-hint kbd{
+    border:1px solid #D3D8D4; border-bottom-width:2px; border-radius:4px;
+    padding:1px 6px; font-family:var(--sans); font-size:10.5px; background:#fff;
+  }
+
+  #confetti-layer{
+    position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50;
+  }
+  .confetti-piece{
+    position:absolute; top:-10px; width:8px; height:14px; opacity:0.9;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform:translateY(105vh) rotate(360deg); opacity:0.4; }
+  }
+
+  @media (max-width:480px){
+    .screen{ padding:24px 18px 22px; }
+    h1.screen-title{ font-size:22px; }
+    .cover h1{ font-size:23px; }
+    .caption{ max-width:100%; }
+    .actions{ flex-direction:column; align-items:stretch; gap:12px; }
+    .nav-btns{ justify-content:flex-end; }
+    .topbar{ padding:12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-text">
+      <div class="name">Team Vyuha</div>
+      <div class="sub">AI Skill Verification, inside iGOT Karmayogi</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="pill-btn accent" id="autoplayBtn" onclick="toggleAutoplay()">▶ Auto-play demo</button>
+    <button class="pill-btn" onclick="resetDemo()">Restart</button>
+  </div>
+</div>
+<div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="stepper-wrap" id="stepperWrap">
+  <div class="stepper" id="stepper"></div>
+</div>
+
+<main>
+  <div class="device">
+    <div class="device-chrome">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="url" id="urlbar">igotkarmayogi.gov.in</div>
+    </div>
+    <div class="screen" id="screen"></div>
+  </div>
+  <div class="kbd-hint">Use <kbd>←</kbd> <kbd>→</kbd> to navigate once a step is complete</div>
+  <footer>Prototype demo · SIH26101 · AI-Enabled Learning Platform for India's Official Statistical System</footer>
+</main>
+
+<div id="confetti-layer"></div>
+
+<script>
+const STEP_LABELS = [
+  "SSO Login","Assessment","Gap Analysis","Recommendation",
+  "Learning Sync","Quiz Generation","Human Review","Verified"
+];
+const URLS = [
+  "igotkarmayogi.gov.in/sso",
+  "igotkarmayogi.gov.in/assessment",
+  "igotkarmayogi.gov.in/competency-profile",
+  "igotkarmayogi.gov.in/recommendations",
+  "igotkarmayogi.gov.in/my-learning",
+  "vyuha-ai.gov.in/quiz-generation",
+  "vyuha-ai.gov.in/review-queue",
+  "igotkarmayogi.gov.in/competency-profile"
+];
+const CAPTIONS = [
+  "Authenticate once via SSO — profile and training history come with you.",
+  "Two scenario questions map straight onto the competency model.",
+  "Two skills fall below benchmark — that drives the next screen.",
+  "Recommendations pull from iGOT's own catalog, not a new library.",
+  "Sync runs over API/webhook — no manual data entry for the ministry.",
+  "Any uploaded document becomes tagged MCQs via the LLM pipeline.",
+  "Every AI-generated question is approved by a human before publishing.",
+  "The loop closes: verified skill, not just a completed course."
+];
+
+let started = false;
+let step = 0;
+let loggedIn = false;
+let answered = [false,false];
+let picked = [null,null];
+let addedCourses = [false,false,false];
+let synced = false;
+let uploaded = false;
+let generating = false;
+let approvals = [false,false,false];
+let autoplaying = false;
+let autoplayCancelled = false;
+
+function wait(ms){
+  return new Promise(res=>{
+    const check = ()=>{
+      if(autoplayCancelled){ res(); return; }
+      setTimeout(res, ms);
+    };
+    check();
+  });
+}
+
+function renderStepper(){
+  const el = document.getElementById('stepper');
+  el.innerHTML = '';
+  STEP_LABELS.forEach((label,i)=>{
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i===step ? ' active' : (i<step ? ' done' : ''));
+    dot.innerHTML = `<span class="circle">${i<step?'✓':i+1}</span><span>${label}</span>`;
+    el.appendChild(dot);
+    if(i < STEP_LABELS.length-1){
+      const line = document.createElement('div');
+      line.className = 'step-line';
+      el.appendChild(line);
+    }
+  });
+  document.getElementById('progressFill').style.width = `${(step/(STEP_LABELS.length-1))*100}%`;
+}
+
+function canAdvance(){
+  switch(step){
+    case 0: return loggedIn;
+    case 1: return answered[0] && answered[1];
+    case 2: return true;
+    case 3: return addedCourses.some(x=>x);
+    case 4: return synced;
+    case 5: return uploaded && !generating;
+    case 6: return approvals.every(x=>x);
+    case 7: return false;
+    default: return false;
+  }
+}
+
+function goNext(){ if(step < STEP_LABELS.length-1 && canAdvance()){ step++; render(); scrollToTop(); } }
+function goBack(){ if(step>0){ step--; render(); scrollToTop(); } }
+function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+
+function resetDemo(){
+  autoplaying = false;
+  autoplayCancelled = true;
+  started = false;
+  step=0; loggedIn=false; answered=[false,false]; picked=[null,null];
+  addedCourses=[false,false,false]; synced=false; uploaded=false; generating=false;
+  approvals=[false,false,false];
+  document.getElementById('autoplayBtn').textContent = '▶ Auto-play demo';
+  document.getElementById('autoplayBtn').classList.remove('playing');
+  document.getElementById('stepperWrap').style.display = 'block';
+  render();
+  scrollToTop();
+}
+
+function beginWalkthrough(){
+  started = true;
+  render();
+}
+
+function doLogin(){ loggedIn = true; render(); }
+function pickOption(qIndex, optIndex){ picked[qIndex] = optIndex; answered[qIndex] = true; render(); }
+function toggleCourse(i){ addedCourses[i] = !addedCourses[i]; render(); }
+
+function startSync(){
+  render(true);
+  setTimeout(()=>{ if(!autoplayCancelled || autoplaying){ synced = true; render(); } }, 1200);
+}
+
+function useSampleDoc(){
+  uploaded = true; generating = true; render();
+  setTimeout(()=>{ generating = false; render(); }, 1400);
+}
+
+function toggleApprove(i){ approvals[i] = !approvals[i]; render(); }
+
+function launchConfetti(){
+  const layer = document.getElementById('confetti-layer');
+  const colors = ['#0F766E','#D98A2E','#2F855A','#10233F'];
+  for(let i=0;i<50;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random()*100 + 'vw';
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDuration = (2 + Math.random()*1.5) + 's';
+    piece.style.animationDelay = (Math.random()*0.4) + 's';
+    piece.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+    layer.appendChild(piece);
+    setTimeout(()=>piece.remove(), 4000);
+  }
+}
+
+/* ---------- screens ---------- */
+
+function screenCover(){
+  return `
+    <div class="cover">
+      <div class="cover-mark"></div>
+      <div class="ps-id">SIH26101 · Smart Education</div>
+      <h1>AI-Enabled Learning Platform for India's Official Statistical System</h1>
+      <p>An interactive walkthrough of how Team Vyuha's AI layer plugs into iGOT Karmayogi — from diagnosis to a verified skill.</p>
+      <div class="cover-actions">
+        <button class="btn btn-primary" onclick="beginWalkthrough()">Begin walkthrough →</button>
+        <button class="btn btn-ghost" onclick="toggleAutoplay()">▶ Watch it play itself</button>
+      </div>
+    </div>
+  `;
+}
+
+function screenLogin(){
+  return `
+    <div class="eyebrow">Step 1 · Authentication</div>
+    <h1 class="screen-title">Sign in with iGOT Karmayogi</h1>
+    <p class="screen-sub">Single sign-on against the existing platform — no new account, no new app.</p>
+    ${!loggedIn ? `
+      <button class="btn btn-primary" onclick="doLogin()">Continue with iGOT SSO →</button>
+    ` : `
+      <div class="profile-card">
+        <div class="avatar">AR</div>
+        <div class="profile-lines">
+          <div class="pname">Ananya Rao</div>
+          <div class="prole">Statistical Officer, Grade II · MoSPI, Regional Office, Pune</div>
+          <div class="prole">Training history: 12 courses completed</div>
+        </div>
+      </div>
+    `}
+  `;
+}
+
+function screenAssessment(){
+  const q1opts = [
+    "Discard the taluka's data as unreliable",
+    "Investigate non-response bias before analysis",
+    "Apply the state average directly to fill gaps",
+    "Increase the national sample size"
+  ];
+  const q2opts = [
+    "Use the same weight for every district",
+    "Recompute design weights for the affected stratum",
+    "Ignore stratification for this round",
+    "Re-survey the entire state"
+  ];
+  function renderQ(qi, text, opts){
+    return `
+      <div class="question-block">
+        <div class="qcount">Scenario ${qi+1} of 2</div>
+        <p class="qtext">${text}</p>
+        <div class="options">
+          ${opts.map((o,oi)=>`<div class="option ${picked[qi]===oi?'picked':''}" onclick="pickOption(${qi},${oi})">${o}</div>`).join('')}
+        </div>
+        ${answered[qi] ? `<div class="feedback-tag">Recorded</div>` : ''}
+      </div>
+    `;
+  }
+  return `
+    <div class="eyebrow">Step 2 · Adaptive assessment</div>
+    <h1 class="screen-title">Diagnostic assessment</h1>
+    <p class="screen-sub">Scenario-based questions, not static recall — mapped against your role benchmark as you answer.</p>
+    ${renderQ(0, "A district survey shows a 40% non-response rate concentrated in one taluka. What's the most likely first step?", q1opts)}
+    ${answered[0] ? renderQ(1, "Field weights were calibrated before a mid-round boundary change affected one stratum. What should happen next?", q2opts) : ''}
+  `;
+}
+
+const SKILLS = [
+  {name:"Survey Sampling Design", score:54, bench:80, cls:"low"},
+  {name:"GIS-based Data Collection", score:35, bench:70, cls:"low"},
+  {name:"Statistical Disclosure Control", score:60, bench:65, cls:"ok"},
+  {name:"Data Validation & Cleaning", score:88, bench:75, cls:"ok"}
+];
+
+function screenGaps(){
+  return `
+    <div class="eyebrow">Step 3 · Competency gap identification</div>
+    <h1 class="screen-title">Your competency profile</h1>
+    <p class="screen-sub">Responses mapped against the Statistical Officer, Grade II benchmark.</p>
+    ${SKILLS.map((s,i)=>`
+      <div class="skill-row">
+        <div class="skill-head">
+          <span class="skill-name">${s.name}</span>
+          <span class="skill-gap-tag">${s.score}% · benchmark ${s.bench}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill ${s.cls}" id="bar-${i}" style="width:0%"></div>
+          <div class="bench-mark" style="left:${s.bench}%"></div>
+        </div>
+      </div>
+    `).join('')}
+    <div class="legend">
+      <span><span class="swatch" style="background:#C0562F"></span>Below benchmark</span>
+      <span><span class="swatch" style="background:#2E8B6F"></span>At or above benchmark</span>
+      <span><span class="swatch" style="background:var(--ink)"></span>Benchmark line</span>
+    </div>
+  `;
+}
+
+function animateGapBars(){
+  SKILLS.forEach((s,i)=>{
+    const bar = document.getElementById(`bar-${i}`);
+    if(bar){ requestAnimationFrame(()=>{ setTimeout(()=>{ bar.style.width = s.score + '%'; }, 60*i); }); }
+  });
+}
+
+function screenRecommend(){
+  const courses = [
+    {t:"Sampling Design for Field Surveys", meta:"3h · iGOT module", tag:"Matched to: Survey Sampling Design"},
+    {t:"GIS Fundamentals for Statistical Offices", meta:"5h · iGOT module", tag:"Matched to: GIS-based Data Collection"},
+    {t:"Statistical Disclosure Control Basics", meta:"2h · iGOT module", tag:"Matched to: Disclosure Control"}
+  ];
+  return `
+    <div class="eyebrow">Step 4 · Personalized recommendation</div>
+    <h1 class="screen-title">Recommended learning path</h1>
+    <p class="screen-sub">Courses pulled from iGOT's existing catalog, matched to your two largest gaps first.</p>
+    ${courses.map((c,i)=>`
+      <div class="course-card">
+        <div class="course-info">
+          <div class="ctitle">${c.t}</div>
+          <div class="cmeta">${c.meta}</div>
+          <span class="ctag">${c.tag}</span>
+        </div>
+        <button class="btn-add ${addedCourses[i]?'added':''}" onclick="toggleCourse(${i})">${addedCourses[i]?'Added ✓':'Add to path'}</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+function screenSync(showLoading){
+  return `
+    <div class="eyebrow">Step 5 · iGOT learning & sync</div>
+    <h1 class="screen-title">Enroll and sync with iGOT</h1>
+    <p class="screen-sub">Enrollment and progress sync happen over the existing API/webhook layer — nothing leaves iGOT.</p>
+    ${!synced && !showLoading ? `<button class="btn btn-primary" onclick="startSync()">Enroll in recommended modules →</button>` : ''}
+    ${showLoading && !synced ? `<div class="checklist"><div class="check-item"><span class="spinner"></span> Enrolling in 3 modules…</div></div>` : ''}
+    ${synced ? `
+      <div class="checklist">
+        <div class="check-item done"><span class="check-circle">✓</span> Enrolled in 3 modules</div>
+        <div class="check-item done"><span class="check-circle">✓</span> Progress sync enabled (webhook)</div>
+        <div class="check-item done"><span class="check-circle">✓</span> Ministry dashboard updated</div>
+      </div>
+    ` : ''}
+  `;
+}
+
+const GEN_QS = [
+  {q:"What is the primary purpose of a design weight in stratified sampling?", tag:"Survey Sampling Design"},
+  {q:"Which action best preserves respondent confidentiality when publishing small-area estimates?", tag:"Disclosure Control"},
+  {q:"A GPS-tagged field record falls outside its assigned block boundary. What should the enumerator do first?", tag:"GIS-based Data Collection"}
+];
+
+function screenQuizGen(){
+  return `
+    <div class="eyebrow">Step 6 · AI-driven quiz generation</div>
+    <h1 class="screen-title">Generate an assessment from training material</h1>
+    <p class="screen-sub">Any manual, policy document, or slide deck becomes tagged MCQs in minutes, not days.</p>
+    ${!uploaded ? `
+      <div class="dropzone">
+        Drop a manual, policy PDF, or training deck here
+        <div style="margin-top:10px;"><button class="btn btn-ghost" onclick="useSampleDoc()">Use sample: NSSO Field Manual.pdf</button></div>
+      </div>
+    ` : `
+      <div class="dropzone">
+        <div class="fname">NSSO Field Manual.pdf</div>
+        ${generating ? `<div style="margin-top:8px;"><span class="spinner"></span> Processing document (LLM)…</div>` : `<div style="margin-top:8px; color:var(--good);">Processed · 3 questions generated</div>`}
+      </div>
+    `}
+    ${uploaded && !generating ? GEN_QS.map(g=>`
+      <div class="gen-q">
+        <div class="gen-q-top">
+          <p class="gen-q-text">${g.q}</p>
+          <span class="comp-tag">${g.tag}</span>
+        </div>
+      </div>
+    `).join('') : ''}
+  `;
+}
+
+function screenReview(){
+  return `
+    <div class="eyebrow">Step 7 · Human review</div>
+    <h1 class="screen-title">Review before publishing</h1>
+    <p class="screen-sub">Reviewed by: Training Cell, MoSPI. Nothing reaches a learner unapproved.</p>
+    ${GEN_QS.map((g,i)=>`
+      <div class="gen-q">
+        <div class="gen-q-top">
+          <p class="gen-q-text">${g.q}</p>
+          <span class="comp-tag">${g.tag}</span>
+        </div>
+        <button class="approve-btn ${approvals[i]?'approved':''}" onclick="toggleApprove(${i})">${approvals[i]?'Approved ✓':'Approve'}</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+function screenVerified(){
+  return `
+    <div class="eyebrow">Step 8 · Skill verification</div>
+    <h1 class="screen-title">Skill verified</h1>
+    <p class="screen-sub">Completed → Verified. The result writes back into Ananya's competency profile.</p>
+    <div class="badge-wrap">
+      <div class="badge">✓</div>
+      <div style="font-family:var(--serif); font-size:17px; color:var(--ink); font-weight:600;">Survey Sampling: 80% · GIS Data Collection: 74%</div>
+      <div class="loop-note">Results continuously re-calibrate the model. Next recommended focus: Statistical Disclosure Control.</div>
+      <div style="margin-top:22px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-saffron" onclick="resetDemo()">Restart demo</button>
+      </div>
+    </div>
+  `;
+}
+
+function render(showSyncLoading){
+  if(!started){
+    document.getElementById('stepperWrap').style.display = 'none';
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('urlbar').textContent = 'igotkarmayogi.gov.in';
+    const screenEl = document.getElementById('screen');
+    screenEl.className = 'screen rise';
+    screenEl.innerHTML = screenCover();
+    return;
+  }
+  document.getElementById('stepperWrap').style.display = 'block';
+  document.getElementById('urlbar').textContent = URLS[step];
+  renderStepper();
+  const screenEl = document.getElementById('screen');
+  screenEl.className = 'screen rise';
+
+  let body;
+  switch(step){
+    case 0: body = screenLogin(); break;
+    case 1: body = screenAssessment(); break;
+    case 2: body = screenGaps(); break;
+    case 3: body = screenRecommend(); break;
+    case 4: body = screenSync(showSyncLoading); break;
+    case 5: body = screenQuizGen(); break;
+    case 6: body = screenReview(); break;
+    case 7: body = screenVerified(); break;
+  }
+
+  const isLast = step === STEP_LABELS.length - 1;
+  const nextDisabled = !canAdvance();
+
+  screenEl.innerHTML = `
+    ${body}
+    <div class="actions">
+      <div class="caption"><b>Why this matters:</b> ${CAPTIONS[step]}</div>
+      <div class="nav-btns">
+        ${step>0 ? `<button class="btn btn-ghost" onclick="goBack()">Back</button>` : ''}
+        ${!isLast ? `<button class="btn btn-primary" ${nextDisabled?'disabled':''} onclick="goNext()">Next →</button>` : ''}
+      </div>
+    </div>
+  `;
+
+  if(step===2){ setTimeout(animateGapBars, 50); }
+  if(step===7){ setTimeout(launchConfetti, 150); }
+}
+
+/* ---------- keyboard navigation ---------- */
+window.addEventListener('keydown', (e)=>{
+  if(autoplaying) return;
+  if(e.key === 'ArrowRight'){ if(!started){ beginWalkthrough(); } else { goNext(); } }
+  if(e.key === 'ArrowLeft'){ if(started){ goBack(); } }
+});
+
+/* ---------- auto-play ---------- */
+async function autoPlay(){
+  autoplaying = true;
+  autoplayCancelled = false;
+  const btn = document.getElementById('autoplayBtn');
+  btn.textContent = '⏸ Playing… (click to stop)';
+  btn.classList.add('playing');
+
+  resetSilently();
+  started = true; render();
+  await wait(1400); if(autoplayCancelled) return finishAutoplay();
+
+  doLogin(); await wait(1600); if(autoplayCancelled) return finishAutoplay();
+  goNext(); await wait(900); if(autoplayCancelled) return finishAutoplay();
+
+  pickOption(0,1); await wait(900); if(autoplayCancelled) return finishAutoplay();
+  pickOption(1,1); await wait(1200); if(autoplayCancelled) return finishAutoplay();
+  goNext(); await wait(1600); if(autoplayCancelled) return finishAutoplay();
+
+  goNext(); await wait(1400); if(autoplayCancelled) return finishAutoplay();
+
+  toggleCourse(0); await wait(500); if(autoplayCancelled) return finishAutoplay();
+  toggleCourse(1); await wait(500); if(autoplayCancelled) return finishAutoplay();
+  toggleCourse(2); await wait(1200); if(autoplayCancelled) return finishAutoplay();
+  goNext(); await wait(900); if(autoplayCancelled) return finishAutoplay();
+
+  startSync(); await wait(2200); if(autoplayCancelled) return finishAutoplay();
+  goNext(); await wait(900); if(autoplayCancelled) return finishAutoplay();
+
+  useSampleDoc(); await wait(2400); if(autoplayCancelled) return finishAutoplay();
+  goNext(); await wait(900); if(autoplayCancelled) return finishAutoplay();
+
+  toggleApprove(0); await wait(500); if(autoplayCancelled) return finishAutoplay();
+  toggleApprove(1); await wait(500); if(autoplayCancelled) return finishAutoplay();
+  toggleApprove(2); await wait(1200); if(autoplayCancelled) return finishAutoplay();
+  goNext(); await wait(600);
+
+  finishAutoplay();
+}
+
+function resetSilently(){
+  step=0; loggedIn=false; answered=[false,false]; picked=[null,null];
+  addedCourses=[false,false,false]; synced=false; uploaded=false; generating=false;
+  approvals=[false,false,false];
+}
+
+function finishAutoplay(){
+  autoplaying = false;
+  const btn = document.getElementById('autoplayBtn');
+  btn.textContent = '▶ Auto-play demo';
+  btn.classList.remove('playing');
+}
+
+function toggleAutoplay(){
+  if(autoplaying){
+    autoplayCancelled = true;
+    finishAutoplay();
+  } else {
+    autoPlay();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
